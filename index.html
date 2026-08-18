@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中壢污水大作戰 - 遊戲登入切版</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Control Panel Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #38bdf8;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* 浮動動畫效果 */
+        @keyframes floatLogo {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(0.5deg); }
+        }
+
+        @keyframes floatBird {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-8px) scale(1.02); }
+        }
+
+        @keyframes floatChar {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        /* 按鈕光澤與呼吸動畫 */
+        @keyframes pulseGlow {
+            0%, 100% { 
+                box-shadow: 0 0 25px rgba(255, 140, 0, 0.8), 0 8px 0 #b44000, inset 0 4px 6px rgba(255, 255, 255, 0.8);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(255, 180, 0, 1), 0 8px 0 #b44000, inset 0 4px 10px rgba(255, 255, 255, 0.9);
+                transform: scale(1.04);
+            }
+        }
+
+        .animate-logo {
+            animation: floatLogo 4s ease-in-out infinite;
+        }
+
+        .animate-bird {
+            animation: floatBird 3.5s ease-in-out infinite;
+        }
+
+        .animate-char {
+            animation: floatChar 4s ease-in-out infinite;
+        }
+
+        .animate-btn-pulse {
+            animation: pulseGlow 2s infinite;
+        }
+
+        /* 擬真按鈕樣式 */
+        .btn-game-start {
+            background: linear-gradient(180deg, #ffc533 0%, #ff8c00 45%, #e65100 100%);
+            border: 4px solid #ffffff;
+            border-radius: 999px;
+            color: #ffffff;
+            text-shadow: 2px 2px 0px #8b2500, -1px -1px 0px #8b2500, 1px -1px 0px #8b2500, -1px 1px 0px #8b2500, 2px 3px 5px rgba(0,0,0,0.4);
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+        }
+
+        .btn-game-start:hover {
+            filter: brightness(1.1);
+            transform: scale(1.08) !important;
+        }
+
+        .btn-game-start:active {
+            transform: scale(0.96) translateY(4px) !important;
+            box-shadow: 0 0 15px rgba(255, 140, 0, 0.6), 0 2px 0 #b44000, inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        /* 輔助網格對齊線 */
+        .grid-overlay {
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden select-none">
+
+    <!-- 1. 背景圖層 (Background Layer) -->
+    <div id="layer-bg" class="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-all duration-300" 
+         style="background-image: url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1920&q=80');">
+        <!-- 半透明藍色遮罩強化色彩氛圍 -->
+        <div class="absolute inset-0 bg-sky-600/20 backdrop-contrast-110"></div>
+    </div>
+
+    <!-- 對齊網格線 (調試用) -->
+    <div id="grid-guide" class="hidden absolute inset-0 grid-overlay pointer-events-none z-50"></div>
+
+    <!-- 2. 主遊戲內容圖層 (Main Stage Layer) -->
+    <div class="relative z-10 w-full h-full flex flex-col justify-between items-center pointer-events-none">
+
+        <!-- (1) 中間上方 LOGO (Top Center Logo) -->
+        <div class="w-full flex justify-center pt-[3vh] sm:pt-[4vh] md:pt-[5vh] z-20 pointer-events-auto">
+            <div id="container-logo" class="animate-logo w-[85%] sm:w-[70%] md:w-[55%] lg:w-[45%] max-w-[700px] cursor-pointer transition-all duration-300 transform hover:scale-105">
+                <!-- LOGO 預設展示 SVG 替代圖案 (可替換為實際切好的 PNG LOGO) -->
+                <div id="logo-render" class="w-full h-auto flex items-center justify-center">
+                    <svg viewBox="0 0 800 350" class="w-full h-auto drop-shadow-[0_10px_15px_rgba(0,0,0,0.3)]">
+                        <defs>
+                            <!-- 水波藍色漸層 -->
+                            <linearGradient id="waterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#38bdf8" />
+                                <stop offset="50%" stop-color="#0284c7" />
+                                <stop offset="100%" stop-color="#0369a1" />
+                            </linearGradient>
+                            <!-- 文字白色立體筆刷漸層 -->
+                            <linearGradient id="textGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#ffffff" />
+                                <stop offset="100%" stop-color="#e0f2fe" />
+                            </linearGradient>
+                            <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+                                <feDropShadow dx="0" dy="6" stdDeviation="4" flood-color="#0284c7" flood-opacity="0.8"/>
+                            </filter>
+                        </defs>
+                        <!-- 水花背景裝飾 -->
+                        <path d="M 100,180 C 150,80 250,50 350,110 C 450,40 600,60 700,150 C 750,200 680,260 580,240 C 450,280 300,270 200,250 C 120,240 70,220 100,180 Z" fill="url(#waterGrad)" stroke="#ffffff" stroke-width="8" />
+                        <path d="M 140,140 C 200,60 320,60 380,120" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" opacity="0.8" />
+                        <path d="M 460,90 C 540,50 640,80 680,130" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity="0.8" />
+                        
+                        <!-- 主標題文字: 中壢 -->
+                        <text x="400" y="130" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-weight="900" font-size="82" fill="url(#textGrad)" stroke="#0284c7" stroke-width="18" paint-order="stroke fill" letter-spacing="8">中 壢</text>
+                        <text x="400" y="130" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-weight="900" font-size="82" fill="url(#textGrad)" stroke="#0369a1" stroke-width="6" paint-order="stroke fill" letter-spacing="8">中 壢</text>
+
+                        <!-- 副標題文字: 污水大作戰 -->
+                        <text x="400" y="235" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-weight="900" font-size="96" fill="url(#textGrad)" stroke="#0284c7" stroke-width="22" paint-order="stroke fill" letter-spacing="4">污水大作戰</text>
+                        <text x="400" y="235" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-weight="900" font-size="96" fill="url(#textGrad)" stroke="#003e6b" stroke-width="8" paint-order="stroke fill" letter-spacing="4">污水大作戰</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- (2) 中間下方「開始遊戲」按鈕 (Bottom Center Button) -->
+        <div class="absolute bottom-[8vh] sm:bottom-[10vh] md:bottom-[12vh] z-30 flex justify-center w-full pointer-events-auto">
+            <button id="btn-start-game" class="btn-game-start animate-btn-pulse px-10 py-3.5 sm:px-14 sm:py-5 md:px-16 md:py-5 text-2xl sm:text-3xl md:text-4xl font-black tracking-widest flex items-center justify-center gap-3 active:scale-95">
+                <i class="fa-solid fa-play text-yellow-200 text-xl sm:text-2xl md:text-3xl filter drop-shadow"></i>
+                <span>開始遊戲</span>
+            </button>
+        </div>
+
+        <!-- (3) 左下白鳥 (Bottom Left Bird Character) - 已放大比例 -->
+        <div id="container-bird" class="absolute left-[-4%] sm:left-[0%] md:left-[2%] bottom-[-2%] sm:bottom-[-1%] w-[58%] sm:w-[48%] md:w-[42%] lg:w-[36%] max-w-[650px] z-20 pointer-events-auto origin-bottom-left animate-bird">
+            <div id="bird-render" class="w-full h-auto cursor-pointer filter drop-shadow-xl hover:brightness-105 transition-all">
+                <!-- 白鳥 SVG 擬真插圖 -->
+                <svg viewBox="0 0 400 450" class="w-full h-auto">
+                    <!-- 羽毛翅膀底色 -->
+                    <path d="M 50,420 C 30,350 40,280 90,230 C 140,180 220,160 260,220 C 310,180 370,160 390,210 C 400,240 370,280 320,310 C 270,340 220,410 120,440 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="6"/>
+                    <!-- 羽毛細節線條 -->
+                    <path d="M 220,230 Q 300,230 350,260" fill="none" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M 200,270 Q 280,280 330,320" fill="none" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M 170,310 Q 240,330 280,380" fill="none" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round"/>
+                    <!-- 鳥頭部 -->
+                    <circle cx="160" cy="160" r="75" fill="#ffffff" stroke="#cbd5e1" stroke-width="6"/>
+                    <!-- 呆毛/頭羽 -->
+                    <path d="M 140,90 Q 110,40 130,20 Q 150,50 160,85" fill="#ffffff" stroke="#cbd5e1" stroke-width="5"/>
+                    <path d="M 165,85 Q 160,30 185,25 Q 185,55 180,85" fill="#ffffff" stroke="#cbd5e1" stroke-width="5"/>
+                    <!-- 眼睛 -->
+                    <ellipse cx="185" cy="145" rx="14" ry="20" fill="#0f172a"/>
+                    <circle cx="189" cy="138" r="6" fill="#ffffff"/>
+                    <!-- 腮紅 -->
+                    <ellipse cx="145" cy="170" rx="14" ry="9" fill="#fca5a5" opacity="0.7"/>
+                    <!-- 鳥嘴 (黃色/橘黃漸層) -->
+                    <path d="M 215,145 L 360,160 C 370,163 365,175 350,180 L 210,185 Z" fill="#f59e0b" stroke="#d97706" stroke-width="4"/>
+                    <path d="M 210,175 L 310,185 L 205,198 Z" fill="#d97706"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- (4) 右下角色阿澤 (Bottom Right Engineer Character) -->
+        <div id="container-char" class="absolute right-[-2%] sm:right-[1%] md:right-[3%] bottom-[0%] w-[50%] sm:w-[42%] md:w-[38%] lg:w-[33%] max-w-[550px] z-20 pointer-events-auto origin-bottom-right animate-char">
+            <div id="char-render" class="w-full h-auto cursor-pointer filter drop-shadow-2xl hover:brightness-105 transition-all">
+                <!-- 工程師阿澤 SVG 擬真插圖 -->
+                <svg viewBox="0 0 450 520" class="w-full h-auto">
+                    <!-- 身體與工程服 -->
+                    <path d="M 120,520 L 130,360 C 130,320 180,310 225,310 C 270,310 320,320 320,360 L 330,520 Z" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="6"/>
+                    <!-- 內襯襯衫 -->
+                    <path d="M 190,310 L 225,370 L 260,310 Z" fill="#ffffff"/>
+                    <!-- 工安背心細節與口袋 -->
+                    <rect x="150" y="380" width="55" height="65" rx="6" fill="#1e40af" stroke="#93c5fd" stroke-width="3"/>
+                    <rect x="245" y="380" width="55" height="65" rx="6" fill="#1e40af" stroke="#93c5fd" stroke-width="3"/>
+                    <!-- 工作識別證 -->
+                    <rect x="200" y="390" width="30" height="40" rx="4" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+                    <circle cx="215" cy="405" r="7" fill="#0284c7"/>
+                    
+                    <!-- 手臂與手套握扳手 -->
+                    <!-- 右手舉起手腕 -->
+                    <path d="M 110,360 Q 60,320 80,240 L 120,250 Q 100,310 140,360 Z" fill="#1d4ed8"/>
+                    <!-- 手套 (咖啡色) -->
+                    <path d="M 65,245 C 50,230 50,200 75,190 C 95,185 115,200 110,230 Z" fill="#854d0e" stroke="#422006" stroke-width="4"/>
+                    <!-- 扳手 (Wrench) -->
+                    <path d="M 45,220 L 20,90 C 15,60 55,40 70,70 L 80,180 Z" fill="#94a3b8" stroke="#475569" stroke-width="5"/>
+                    <circle cx="42" cy="70" r="22" fill="#cbd5e1" stroke="#475569" stroke-width="5"/>
+                    <path d="M 32,58 L 52,68 L 42,88 Z" fill="#64748b"/>
+
+                    <!-- 脖子 -->
+                    <rect x="200" y="270" width="50" height="45" fill="#fdba74"/>
+                    
+                    <!-- 臉部 -->
+                    <path d="M 150,200 C 150,290 300,290 300,200 C 300,160 280,140 225,140 C 170,140 150,160 150,200 Z" fill="#ffedd5"/>
+                    <!-- 眼睛 -->
+                    <ellipse cx="190" cy="205" rx="14" ry="18" fill="#451a03"/>
+                    <circle cx="194" cy="198" r="5" fill="#ffffff"/>
+                    <ellipse cx="260" cy="205" rx="14" ry="18" fill="#451a03"/>
+                    <circle cx="264" cy="198" r="5" fill="#ffffff"/>
+                    <!-- 眉毛 -->
+                    <path d="M 172,180 Q 190,172 208,180" fill="none" stroke="#451a03" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M 242,180 Q 260,172 278,180" fill="none" stroke="#451a03" stroke-width="5" stroke-linecap="round"/>
+                    <!-- 燦爛笑容 -->
+                    <path d="M 195,230 Q 225,265 255,230 Z" fill="#dc2626" stroke="#991b1b" stroke-width="3"/>
+                    <!-- 腮紅 -->
+                    <ellipse cx="170" cy="225" rx="10" ry="6" fill="#f87171" opacity="0.6"/>
+                    <ellipse cx="280" cy="225" rx="10" ry="6" fill="#f87171" opacity="0.6"/>
+
+                    <!-- 工程安全帽 (White Helmet with "阿澤") -->
+                    <path d="M 130,150 C 130,60 320,60 320,150 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="6"/>
+                    <!-- 帽子帽沿 -->
+                    <path d="M 110,150 Q 225,135 340,150 C 350,165 330,170 320,170 Q 225,152 130,170 C 120,170 100,165 110,150 Z" fill="#f1f5f9" stroke="#94a3b8" stroke-width="4"/>
+                    <!-- 帽子藍條紋 -->
+                    <path d="M 134,142 C 160,105 290,105 316,142" fill="none" stroke="#2563eb" stroke-width="8"/>
+                    <!-- 工程帽名稱貼紙: 阿澤 -->
+                    <rect x="182" y="92" width="86" height="36" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+                    <text x="225" y="118" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-weight="900" font-size="22" fill="#0f172a" letter-spacing="3">阿澤</text>
+                </svg>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 3. 切版控制與圖層替換工具面板 (Dev Control Bar) -->
+    <div id="control-panel" class="fixed top-4 right-4 z-50 flex flex-col items-end gap-2">
+        <!-- 開啟/關閉控制按鈕 -->
+        <button id="toggle-panel-btn" class="bg-slate-900/90 text-white hover:bg-slate-800 px-4 py-2.5 rounded-full shadow-2xl backdrop-blur-md border border-slate-700 text-sm font-bold flex items-center gap-2 transition-all active:scale-95">
+            <i class="fa-solid fa-sliders text-sky-400"></i>
+            <span>圖層替換面板</span>
+        </button>
+
+        <!-- 切換圖層與設定選單 -->
+        <div id="panel-content" class="hidden w-80 sm:w-96 bg-slate-900/95 text-slate-100 rounded-2xl shadow-2xl p-5 backdrop-blur-xl border border-slate-700/80 text-xs sm:text-sm max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                <h3 class="font-bold text-base text-sky-400 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group"></i> 圖片素材替換器
+                </h3>
+                <span class="text-xs text-slate-400">即時預覽 / 切版測試</span>
+            </div>
+
+            <!-- 控制說明 -->
+            <p class="text-slate-300 text-xs mb-4 leading-relaxed bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/50">
+                💡 點擊下方區塊可貼上自訂的 PNG 切圖 URL 或直接上傳檔案，替換畫面中的對應元件！
+            </p>
+
+            <div class="space-y-4">
+                <!-- 替換背景圖 -->
+                <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                    <label class="font-bold text-slate-200 block mb-1.5 flex justify-between">
+                        <span>1. 背景圖 (Background)</span>
+                        <button onclick="resetAsset('bg')" class="text-xs text-sky-400 hover:underline">重置</button>
+                    </label>
+                    <input type="file" accept="image/*" onchange="handleFileUpload(event, 'bg')" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-sky-600 file:text-white hover:file:bg-sky-500 mb-2 cursor-pointer">
+                    <input type="text" id="url-bg" placeholder="或貼上背景圖片 URL" onchange="handleUrlInput(this.value, 'bg')" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+                </div>
+
+                <!-- 替換 LOGO -->
+                <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                    <label class="font-bold text-slate-200 block mb-1.5 flex justify-between">
+                        <span>2. 中間上方 LOGO</span>
+                        <button onclick="resetAsset('logo')" class="text-xs text-sky-400 hover:underline">重置</button>
+                    </label>
+                    <input type="file" accept="image/*" onchange="handleFileUpload(event, 'logo')" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-sky-600 file:text-white hover:file:bg-sky-500 mb-2 cursor-pointer">
+                    <input type="text" id="url-logo" placeholder="貼上 PNG 切圖 URL" onchange="handleUrlInput(this.value, 'logo')" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+                </div>
+
+                <!-- 替換 左下白鳥 -->
+                <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                    <label class="font-bold text-slate-200 block mb-1.5 flex justify-between">
+                        <span>3. 左下角白鳥角色</span>
+                        <button onclick="resetAsset('bird')" class="text-xs text-sky-400 hover:underline">重置</button>
+                    </label>
+                    <input type="file" accept="image/*" onchange="handleFileUpload(event, 'bird')" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-sky-600 file:text-white hover:file:bg-sky-500 mb-2 cursor-pointer">
+                    <input type="text" id="url-bird" placeholder="貼上 PNG 切圖 URL" onchange="handleUrlInput(this.value, 'bird')" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+                </div>
+
+                <!-- 替換 右下角色阿澤 -->
+                <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                    <label class="font-bold text-slate-200 block mb-1.5 flex justify-between">
+                        <span>4. 右下角人物 (阿澤)</span>
+                        <button onclick="resetAsset('char')" class="text-xs text-sky-400 hover:underline">重置</button>
+                    </label>
+                    <input type="file" accept="image/*" onchange="handleFileUpload(event, 'char')" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-sky-600 file:text-white hover:file:bg-sky-500 mb-2 cursor-pointer">
+                    <input type="text" id="url-char" placeholder="貼上 PNG 切圖 URL" onchange="handleUrlInput(this.value, 'char')" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+                </div>
+
+                <!-- 開關對齊線與動畫 -->
+                <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 space-y-2">
+                    <label class="flex items-center justify-between cursor-pointer">
+                        <span class="text-slate-200 font-bold">顯示版面輔助網格</span>
+                        <input type="checkbox" id="toggle-grid" onchange="toggleGrid(this.checked)" class="w-4 h-4 accent-sky-500 rounded">
+                    </label>
+                    <label class="flex items-center justify-between cursor-pointer">
+                        <span class="text-slate-200 font-bold">開啟動態浮動效果</span>
+                        <input type="checkbox" id="toggle-anim" checked onchange="toggleAnimations(this.checked)" class="w-4 h-4 accent-sky-500 rounded">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自訂彈出訊息 Toast (代替 alert) -->
+    <div id="toast-message" class="fixed top-8 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 text-white border border-sky-500/50 px-6 py-3 rounded-full shadow-2xl backdrop-blur-md transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-sky-400 text-lg"></i>
+        <span id="toast-text" class="font-bold text-sm"></span>
+    </div>
+
+    <script>
+        // 保存原始 SVG 內容以便重置
+        const originalSVG = {
+            logo: document.getElementById('logo-render').innerHTML,
+            bird: document.getElementById('bird-render').innerHTML,
+            char: document.getElementById('char-render').innerHTML,
+            bg: "url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1920&q=80')"
+        };
+
+        // 控制面板展開/收合
+        const toggleBtn = document.getElementById('toggle-panel-btn');
+        const panelContent = document.getElementById('panel-content');
+
+        toggleBtn.addEventListener('click', () => {
+            panelContent.classList.toggle('hidden');
+        });
+
+        // 顯示自訂訊息 Toast
+        function showToast(message, iconClass = "fa-circle-check text-sky-400") {
+            const toast = document.getElementById('toast-message');
+            const toastText = document.getElementById('toast-text');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastText.innerText = message;
+            toastIcon.className = `fa-solid ${iconClass} text-lg`;
+
+            toast.classList.remove('-translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('-translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        // 開始遊戲按鈕點擊事件
+        document.getElementById('btn-start-game').addEventListener('click', () => {
+            showToast("🎮 遊戲開始載入中...", "fa-circle-play text-amber-400");
+        });
+
+        // 本地檔案上傳處理
+        function handleFileUpload(event, type) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    applyAsset(type, e.target.result);
+                    showToast(`已成功替換 ${getTypeName(type)} 圖片！`);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // URL 輸入處理
+        function handleUrlInput(url, type) {
+            if (url.trim() !== '') {
+                applyAsset(type, url.trim());
+                showToast(`已更新 ${getTypeName(type)} 的圖片網址！`);
+            }
+        }
+
+        // 套用素材圖片
+        function applyAsset(type, source) {
+            if (type === 'bg') {
+                document.getElementById('layer-bg').style.backgroundImage = `url('${source}')`;
+            } else if (type === 'logo') {
+                document.getElementById('logo-render').innerHTML = `<img src="${source}" alt="Logo" class="w-full h-auto drop-shadow-2xl object-contain">`;
+            } else if (type === 'bird') {
+                document.getElementById('bird-render').innerHTML = `<img src="${source}" alt="白鳥" class="w-full h-auto drop-shadow-xl object-contain">`;
+            } else if (type === 'char') {
+                document.getElementById('char-render').innerHTML = `<img src="${source}" alt="阿澤" class="w-full h-auto drop-shadow-2xl object-contain">`;
+            }
+        }
+
+        // 重置素材
+        function resetAsset(type) {
+            if (type === 'bg') {
+                document.getElementById('layer-bg').style.backgroundImage = originalSVG.bg;
+                document.getElementById('url-bg').value = '';
+            } else if (type === 'logo') {
+                document.getElementById('logo-render').innerHTML = originalSVG.logo;
+                document.getElementById('url-logo').value = '';
+            } else if (type === 'bird') {
+                document.getElementById('bird-render').innerHTML = originalSVG.bird;
+                document.getElementById('url-bird').value = '';
+            } else if (type === 'char') {
+                document.getElementById('char-render').innerHTML = originalSVG.char;
+                document.getElementById('url-char').value = '';
+            }
+            showToast(`已重置 ${getTypeName(type)} 為預設視覺！`);
+        }
+
+        function getTypeName(type) {
+            const names = { bg: '背景圖', logo: 'LOGO', bird: '左下白鳥', char: '人物阿澤' };
+            return names[type] || type;
+        }
+
+        // 開關輔助網格
+        function toggleGrid(show) {
+            const grid = document.getElementById('grid-guide');
+            if (show) {
+                grid.classList.remove('hidden');
+            } else {
+                grid.classList.add('hidden');
+            }
+        }
+
+        // 開關動畫
+        function toggleAnimations(enable) {
+            const logo = document.getElementById('container-logo');
+            const bird = document.getElementById('container-bird');
+            const char = document.getElementById('container-char');
+            const btn = document.getElementById('btn-start-game');
+
+            if (enable) {
+                logo.classList.add('animate-logo');
+                bird.classList.add('animate-bird');
+                char.classList.add('animate-char');
+                btn.classList.add('animate-btn-pulse');
+            } else {
+                logo.classList.remove('animate-logo');
+                bird.classList.remove('animate-bird');
+                char.classList.remove('animate-char');
+                btn.classList.remove('animate-btn-pulse');
+            }
+        }
+    </script>
+</body>
+</html>
